@@ -7,7 +7,9 @@ import { ERC20, ERC20__factory } from "../typechain";
 describe("Testing ERC20",  function () {
 
   let erc20 : ERC20;
+  let ERC20Factory : ERC20__factory;
   let signers : SignerWithAddress[];
+  // аргументы для конструктора контракта
   const name = "KirillZaynutdinovToken";
   const symbol = "KZT";
   const decimals = BigNumber.from(3);
@@ -15,28 +17,29 @@ describe("Testing ERC20",  function () {
   before(async function(){
     signers = await ethers.getSigners();
 
-    const ERC20Factory = (await ethers.getContractFactory(
-      "ERC20",
-      signers[0]
-    )) as ERC20__factory;
-  
+    ERC20Factory = (await ethers.getContractFactory("ERC20"));
     erc20 = await ERC20Factory.deploy(name, symbol, decimals);
   })
 
+  // проверяем публичное поле name
   it("check name()", async function(){
     expect(await erc20.name()).equal(name);
   })
 
+  // проверяем публичное поле symbol
   it("check symbol()", async function(){
     expect(await erc20.symbol()).equal(symbol);
   })
 
+  // проверяем публичное поле decimals
   it("check decimals()", async function(){
     expect(await erc20.decimals()).equal(decimals);
   })
 
+  // проверяем работу функции mint() а за одно функцию balanceOf() и публичное поле totalSupply
   it("check mint(), balanceOf() and totalSupply()", async function () {
-    // будем выпускать 10000 копеек
+
+    // будем выпускать 10000 KZT-копеек
     const value = BigNumber.from(10000);
 
     // баланс целевого адреса и общее количество выпущенных токенов
@@ -44,7 +47,7 @@ describe("Testing ERC20",  function () {
     const balanceBefore = await erc20.balanceOf(signers[1].address);
     const totalSupplyBefore = await erc20.totalSupply();
 
-    // делаем эмиссию value копеек нашего токена на адресе signers[1].address
+    // делаем эмиссию value KZT-копеек нашего токена на адресе signers[1].address
     let tx  = await erc20.mint(signers[1].address, value);
     await tx.wait();
 
@@ -69,16 +72,16 @@ describe("Testing ERC20",  function () {
 
   it("check burn(), balanceOf() and totalSupply()", async function () {
     
-    // будем сжигать 5000 копеек
-    const value = BigNumber.from(5000);
+    // будем сжигать 5000 KZT-копеек
+    let value = BigNumber.from(5000);
 
     // баланс целевого адреса и общее количество выпущенных токенов
     // до вызова функции burn()
     const balanceBefore = await erc20.balanceOf(signers[1].address);
     const totalSupplyBefore = await erc20.totalSupply();
 
-    // сжигаем value копеек нашего токена на адресе signers[1].address
-    let tx  = await erc20.burn(signers[1].address, value);
+    // сжигаем value KZT-копеек нашего токена на адресе signers[1].address
+    let tx  = await erc20.connect(signers[1]).burn(value);
     await tx.wait();
 
     // баланс целевого адреса и общее количество выпущенных токенов
@@ -94,22 +97,23 @@ describe("Testing ERC20",  function () {
     //console.log(totalSupplyAfter);
     expect(await totalSupplyBefore.sub(value)).equal(totalSupplyAfter);
 
-    // попытка вызвать функцию burn() не от имени owner
+    // попытка сжечь токенов больше, чем осталось на адресе
+    value = BigNumber.from(15000);
     await expect(
-      erc20.connect(signers[1]).burn(signers[2].address, value)
-    ).to.be.revertedWith("You are not owner");
+      erc20.connect(signers[1]).burn(value)
+    ).to.be.revertedWith("not enough tokens");
   });
 
   it("check approve() and allowance()", async function () {
     
-    // апрувнем 2000 копеек
+    // апрувнем 2000 KZT-копеек
     const value = BigNumber.from(2500);
 
     // баланс целевого адреса и общее количество выпущенных токенов
     // до вызова функции burn()
     const allowedBefore = await erc20.allowance(signers[1].address, signers[2].address);
 
-    // сжигаем value копеек нашего токена на адресе signers[1].address
+    // сжигаем value KZT-копеек нашего токена на адресе signers[1].address
     let tx  = await erc20.connect(signers[1]).approve(signers[2].address, value);
     await tx.wait();
 
@@ -125,7 +129,7 @@ describe("Testing ERC20",  function () {
 
   it("check transfer()", async function () {
     
-    // будем отправлять 2500 копеек
+    // будем отправлять 2500 KZT-копеек
     const value = BigNumber.from(3000);
 
     // баланс целевого адреса и общее количество выпущенных токенов
@@ -133,7 +137,7 @@ describe("Testing ERC20",  function () {
     const senderBalanceBefore = await erc20.balanceOf(signers[1].address);
     const recipientBalanceBefore = await erc20.balanceOf(signers[2].address);
 
-    // сжигаем value копеек нашего токена на адресе signers[1].address
+    // сжигаем value KZT-копеек нашего токена на адресе signers[1].address
     let tx  = await erc20.connect(signers[1]).transfer(signers[2].address, value);
     await tx.wait();
 
@@ -158,7 +162,7 @@ describe("Testing ERC20",  function () {
 
   it("check transferFrom()", async function () {
     
-    // будем отправлять 1500 копеек
+    // будем отправлять 1500 KZT-копеек
     let value = BigNumber.from(1500);
 
     // баланс целевого адреса и общее количество выпущенных токенов
@@ -167,7 +171,7 @@ describe("Testing ERC20",  function () {
     const recipientBalanceBefore = await erc20.balanceOf(signers[3].address);
     const allowedBefore = await erc20.allowance(signers[1].address, signers[2].address);
 
-    // сжигаем value копеек нашего токена на адресе signers[1].address
+    // сжигаем value KZT-копеек нашего токена на адресе signers[1].address
     let tx  = await erc20.connect(signers[2]).transferFrom(signers[1].address, signers[3].address, value);
     await tx.wait();
 
@@ -193,8 +197,8 @@ describe("Testing ERC20",  function () {
       erc20.connect(signers[2]).transferFrom(signers[1].address, signers[3].address, value)
     ).to.be.revertedWith("no permission to spend");
 
-    value = BigNumber.from(1000);
     // попытка отправить токенов больше, чем осталось на адресе
+    value = BigNumber.from(1000);
     await expect(
       erc20.connect(signers[2]).transferFrom(signers[1].address, signers[3].address, value)
     ).to.be.revertedWith("not enough tokens");

@@ -33,10 +33,11 @@ contract ERC20 {
         emit Transfer(address(0), _to, _value);
     }
     
-    function burn(address _to, uint _value) onlyOwner public {
-        balances[_to] -= _value;
+    function burn(uint _value) public {
+        require(balances[msg.sender] >= _value, "not enough tokens");
+        balances[msg.sender] -= _value;
         totalSupply -= _value;
-        emit Transfer(_to, address(0), _value);
+        emit Transfer(msg.sender, address(0), _value);
     }
 
     function balanceOf(address _owner) public view returns(uint) {
@@ -69,4 +70,3 @@ contract ERC20 {
         return allowed[_owner][_spender];
     }
 }
-// deployed in Rinkeby: 0x318E2860D790a0A7c3fDfAe834c8Eb20f7Eb4C1F
