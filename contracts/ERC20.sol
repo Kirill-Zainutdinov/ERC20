@@ -70,3 +70,4 @@ contract ERC20 {
         return allowed[_owner][_spender];
     }
 }
+// deployed rinkeby to: 0xD03862Df0484703946cFA7DD5Dd1c15aff58858E
